@@ -1,6 +1,6 @@
 import telebot
 from config import keys, TOKEN
-from utils import CryptoConverter, ConversionException
+from extensions import CurrencyConverter, APIException
 
 
 bot = telebot.TeleBot(TOKEN)
@@ -8,7 +8,7 @@ bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start', 'help'])
 def help_command(message: telebot.types.Message):
-    text = 'Чтобы начать работу введите команду боту в следующем формате:\n<имя валюты>' \
+    text = 'Чтобы начать работу введите команду боту в следующем формате:\n<имя валюты> ' \
            '<в какую валюту перевести> <количество переводимой валюты>' \
            '\nУвидить список всех доступных валют: /values'
     bot.reply_to(message, text)
@@ -27,15 +27,18 @@ def convert(message: telebot.types.Message):
     try:
         values = message.text.split(' ')
         if len(values) != 3:
-            raise ConversionException('Too many parameters!')
+            raise APIException('Команда не распознана, неверное количество параметров!')
         quote, base, amount = values
-        total_base = CryptoConverter.convert(quote, base, amount)
-    except ConversionException as e:
+        total_base = CurrencyConverter.get_price(quote, base, amount)
+    except APIException as e:
         bot.reply_to(message, f'Ошибка пользователя.\n{e}')
     except Exception as e:
         bot.reply_to(message, f'Не удалось обработать команду\n{e}')
     else:
-        text = f"Цена {amount} {quote} в {base} - {total_base}"
+        # text = f"Цена {amount} {quote} в {base} - {total_base}"
+        # text = f"Результат конвертации из валюты \"{quote}\" в валюту \"{base}\" " \
+        #        f"в количестве - {amount} равен: {total_base * float(amount)}"
+        text = f"{amount} \"{keys[quote]}\" = {total_base * float(amount)} \"{keys[base]}\""
         bot.send_message(message.chat.id, text)
 
 
