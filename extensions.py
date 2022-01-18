@@ -1,6 +1,6 @@
 import json
 import requests
-from config import keys
+from config import currencies
 
 
 class APIException(Exception):
@@ -9,25 +9,25 @@ class APIException(Exception):
 
 class CurrencyConverter:
     @staticmethod
-    def get_price(quote: str, base: str, amount: str):
+    def get_price(c_from: str, c_to: str, amount: str):
 
-        if quote == base:
-            raise APIException(f'Конвертация одинаковых валют {base} не имеет смысла! Результат равен {amount}.')
-
-        try:
-            quote_ticker = keys[quote]
-        except KeyError:
-            raise APIException(f'Неверно указано название валюты {quote}!')
+        if c_from == c_to:
+            raise APIException(f'Конвертация одинаковых валют {c_to} не имеет смысла! Результат равен {amount}.')
 
         try:
-            base_ticker = keys[base]
+            c_from_ticker = currencies[c_from]
         except KeyError:
-            raise APIException(f'Неверно указано название валюты {base}!')
+            raise APIException(f'Неверно указано название валюты {c_from}!')
+
+        try:
+            c_to_ticker = currencies[c_to]
+        except KeyError:
+            raise APIException(f'Неверно указано название валюты {c_to}!')
 
         try:
             amount = float(amount)
         except ValueError:
             raise APIException(f'Неверно указано количество {amount}!')
 
-        r = requests.get(f'https://min-api.cryptocompare.com/data/price?fsym={quote_ticker}&tsyms={base_ticker}')
-        return float(json.loads(r.content)[keys[base]])
+        r = requests.get(f'https://min-api.cryptocompare.com/data/price?fsym={c_from_ticker}&tsyms={c_to_ticker}')
+        return float(json.loads(r.content)[currencies[c_to]])
